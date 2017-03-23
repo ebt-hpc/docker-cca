@@ -158,7 +158,7 @@ def progress(proc, stat_path, timeout=TIMEOUT):
             if nclosed >= nouts:
                 running = False
 
-        except BaseException, e:
+        except BaseException as e:
             print(str(e))
             break
 
@@ -204,7 +204,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
     else:
         try:
             os.makedirs(dest_root)
-        except Exception, e:
+        except Exception as e:
             print('"%s": faild to create: %s' % (dest_root, e))
             return
 
@@ -219,7 +219,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
     if not os.path.exists(log_dir):
         try:
             os.makedirs(log_dir)
-        except Exception, e:
+        except Exception as e:
             print('"%s": faild to create: %s' % (log_dir, e))
             return
 
@@ -258,7 +258,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
         except (KeyboardInterrupt, SystemExit):
             print('interrupted.')
 
-        except OSError, e:
+        except OSError as e:
             print('execution failed: %s' % e)
 
 
@@ -276,7 +276,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
     try:
         if not os.path.exists(mongo_db_path):
             os.makedirs(mongo_db_path)
-    except Exception, e:
+    except Exception as e:
         print('"%s": failed to create: %s' % (mongo_db_path, e))
         return
 
@@ -294,7 +294,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
     if not os.path.exists(log_dir):
         try:
             os.makedirs(log_dir)
-        except Exception, e:
+        except Exception as e:
             print('"%s": faild to create: %s' % (log_dir, e))
             return
 
@@ -329,7 +329,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
     if not dry_run:
         try:
             call(run_cmd, shell=True, close_fds=True)
-        except OSError, e:
+        except OSError as e:
             print('execution failed: %s' % e)
 
 
@@ -349,7 +349,7 @@ def stop_tv_srv(dpath, dry_run=False):
     if not dry_run:
         try:
             call(stop_cmd, shell=True, close_fds=True)
-        except OSError, e:
+        except OSError as e:
             print('execution failed: %s' % e)
     
 
