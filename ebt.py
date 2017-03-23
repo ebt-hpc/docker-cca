@@ -111,7 +111,7 @@ def progress(proc, stat_path, timeout=TIMEOUT):
                 with open(stat_path, 'r') as f:
                     mes = f.read()
                     print('[%s]' % mes)
-        except OSError, e:
+        except OSError as e:
             pass
 
         try:
