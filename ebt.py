@@ -248,7 +248,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
 
         try:
             proc = Popen(run_cmd, bufsize=BUFSIZE, shell=True,
-                         stdout=PIPE, stderr=PIPE, close_fds=True,
+                         stdout=PIPE, stderr=PIPE,
                          universal_newlines=True)
 
             th = Thread(target=progress, args=(proc, stat_path))
@@ -328,7 +328,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
 
     if not dry_run:
         try:
-            call(run_cmd, shell=True, close_fds=True)
+            call(run_cmd, shell=True)
         except OSError as e:
             print('execution failed: %s' % e)
 
@@ -348,7 +348,7 @@ def stop_tv_srv(dpath, dry_run=False):
 
     if not dry_run:
         try:
-            call(stop_cmd, shell=True, close_fds=True)
+            call(stop_cmd, shell=True)
         except OSError as e:
             print('execution failed: %s' % e)
     
