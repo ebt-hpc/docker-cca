@@ -25,9 +25,8 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
-from subprocess import Popen, PIPE, call
+from subprocess import Popen, call
 from threading import Thread
-from select import select
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 IMAGE_NAME = 'ebtxhpc/cca'
@@ -49,7 +48,6 @@ CONTAINER_CMD = 'docker'
 
 TIMEOUT = 5
 BUFSIZE = 0 # unbuffered
-LOG_BUFSIZE = 256
 
 STAT_NAME = 'status'
 LOG_DIR_NAME = 'log'
@@ -91,75 +89,24 @@ if time.timezone != 0:
 ###
 
 def progress(proc, stat_path, timeout=TIMEOUT):
-    running = True
-    outs = [proc.stdout, proc.stderr]
-    nouts = len(outs)
-    max_count = LOG_BUFSIZE
-    prev_out = None
-    out = None
-    count = 0
-    nclosed = 0
     stat_mtime = None
 
     print('\nmonitoring thread started.')
 
-    while running:
+    while True:
         try:
             st = os.stat(stat_path)
-            if st.st_mtime != stat_mtime:
-                stat_mtime = st.st_mtime
+            if st.st_mtime != stat_mtime and st.st_size > 0:
                 with open(stat_path, 'r') as f:
                     mes = f.read()
                     print('[%s]' % mes)
+
+                stat_mtime = st.st_mtime
+
         except OSError as e:
             pass
 
-        try:
-            (ready_outs, x0, x1) = select(outs, [], [], timeout)
-            n = len(ready_outs)
-            if prev_out:
-                if prev_out in ready_outs:
-                    if count < max_count:
-                        out = prev_out
-                        count += 1
-                    else:
-                        if n > 1:
-                            i = ready_outs.index(prev_out)
-                            if i < n - 1:
-                                out = ready_outs[i+1]
-                            else:
-                                out = ready_outs[0]
-                            count = 0
-                        else:
-                            out = prev_out
-                elif n > 0:
-                    out = ready_outs[0]
-                    count = 0
-                else:
-                    out = None
-            elif n > 0:
-                out = ready_outs[0]
-                count = 0
-            else:
-                out = None
-
-            prev_out = out
-
-            if out:
-                dat = out.read(1)
-
-                if dat:
-                    sys.stdout.write(dat)
-
-                else:
-                    outs.remove(out)
-                    nclosed += 1
-
-            if nclosed >= nouts:
-                running = False
-
-        except BaseException as e:
-            print(str(e))
+        if proc.poll() is not None:
             break
 
     proc.wait()
@@ -248,7 +195,6 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
 
         try:
             proc = Popen(run_cmd, bufsize=BUFSIZE, shell=True,
-                         stdout=PIPE, stderr=PIPE,
                          universal_newlines=True)
 
             th = Thread(target=progress, args=(proc, stat_path))
