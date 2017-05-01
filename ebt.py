@@ -297,7 +297,15 @@ def stop_tv_srv(dpath, dry_run=False):
             call(stop_cmd, shell=True)
         except OSError as e:
             print('execution failed: %s' % e)
-    
+
+def update(args):
+    cmd = '%s pull %s' % (CONTAINER_CMD, IMAGE_NAME)
+    print(cmd)
+    if not args.dry_run:
+        try:
+            call(cmd, shell=True)
+        except OSError as e:
+            print('execution failed: %s' % e)
 
 def opcount(args):
     run_cmd('opcount', args.proj_dir, args.mem, dry_run=args.dry_run)
@@ -325,13 +333,21 @@ def main():
 
     subparsers = parser.add_subparsers(title='subcommands')
 
+    parser_update = subparsers.add_parser('update',
+                                          description='Update docker image of CCA/EBT',
+                                          formatter_class=ArgumentDefaultsHelpFormatter)
+
+    parser_update.set_defaults(func=update)
+
     parser_opcount = subparsers.add_parser('opcount',
+                                           description='Count operations in Fortran programs',
                                            formatter_class=ArgumentDefaultsHelpFormatter)
     parser_opcount.add_argument('proj_dir', type=str, metavar='DIR',
                                 help='directory that subject programs reside')
     parser_opcount.set_defaults(func=opcount)
 
     parser_outline = subparsers.add_parser('outline',
+                                           description='Outline Fortran programs',
                                            formatter_class=ArgumentDefaultsHelpFormatter)
     parser_outline.add_argument('proj_dir', type=str, metavar='DIR',
                                 help='directory that subject programs reside')
