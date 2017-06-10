@@ -131,8 +131,14 @@ def get_proj_path(dpath):
     proj_path = '%s/%s' % (PROJS_DIR, proj_id)
     return proj_path
 
+def get_image_name(devel=False):
+    suffix = ''
+    if devel:
+        suffix = ':devel'
+    image = IMAGE_NAME+suffix
+    return image
 
-def run_cmd(subcmd_name, dpath, mem, dry_run=False):
+def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False):
     dpath = check_path(dpath)
 
     if dpath == None:
@@ -181,7 +187,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
         run_cmd += ' -e "TZ=%s"' % TZ
 
     run_cmd += ' %s' % vol_opt
-    run_cmd += ' %s %s' % (IMAGE_NAME, subcmd)
+    run_cmd += ' %s %s' % (get_image_name(devel=devel), subcmd)
 
     stat_path = os.path.join(dest_root, STAT_NAME)
 
@@ -208,7 +214,7 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False):
             print('execution failed: %s' % e)
 
 
-def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
+def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False):
     subcmd_name = 'treeview'
     dpath = check_path(dpath)
 
@@ -267,7 +273,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
         run_cmd += ' -e "TZ=%s"' % TZ
 
     run_cmd += ' %s' % vol_opt
-    run_cmd += ' %s %s' % (IMAGE_NAME, SRV_CMD)
+    run_cmd += ' %s %s' % (get_image_name(devel=devel), SRV_CMD)
 
     print(run_cmd)
     print('\nport=%d' % port)
@@ -279,7 +285,7 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False):
             print('execution failed: %s' % e)
 
 
-def stop_tv_srv(dpath, dry_run=False):
+def stop_tv_srv(dpath, dry_run=False, devel=False):
     subcmd_name = 'treeview'
     dpath = check_path(dpath)
 
@@ -299,7 +305,7 @@ def stop_tv_srv(dpath, dry_run=False):
             print('execution failed: %s' % e)
 
 def update(args):
-    cmd = '%s pull %s' % (CONTAINER_CMD, IMAGE_NAME)
+    cmd = '%s pull %s' % (CONTAINER_CMD, get_image_name(devel=args.devel))
     print(cmd)
     if not args.dry_run:
         try:
@@ -308,16 +314,16 @@ def update(args):
             print('execution failed: %s' % e)
 
 def opcount(args):
-    run_cmd('opcount', args.proj_dir, args.mem, dry_run=args.dry_run)
+    run_cmd('opcount', args.proj_dir, args.mem, dry_run=args.dry_run, devel=args.devel)
 
 def outline(args):
-    run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run)
+    run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run, devel=args.devel)
 
 def treeview_start(args):
-    run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run)
+    run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel)
 
 def treeview_stop(args):
-    stop_tv_srv(args.proj_dir, dry_run=args.dry_run)
+    stop_tv_srv(args.proj_dir, dry_run=args.dry_run, devel=args.devel)
 
 
 def main():
@@ -330,6 +336,9 @@ def main():
 
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true',
                         help='only print container commands')
+
+    parser.add_argument('-d', '--devel', dest='devel', action='store_true',
+                        help='use developmental image')
 
     subparsers = parser.add_subparsers(title='subcommands')
 
