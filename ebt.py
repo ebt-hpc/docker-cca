@@ -337,8 +337,8 @@ def main():
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true',
                         help='only print container commands')
 
-    parser.add_argument('-d', '--devel', dest='devel', action='store_true',
-                        help='use developmental image')
+    parser.add_argument('-x', '--experimental', dest='devel', action='store_true',
+                        help='use experimental image')
 
     subparsers = parser.add_subparsers(title='subcommands')
 
