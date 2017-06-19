@@ -176,8 +176,8 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False):
             print('"%s": faild to create: %s' % (log_dir, e))
             return
 
-    vol_opt = '-v %s:%s' % (dpath, proj_path)
-    vol_opt += ' -v %s:%s' % (log_dir, CCA_LOG_DIR)
+    vol_opt = '-v "%s:%s"' % (dpath, proj_path)
+    vol_opt += ' -v "%s:%s"' % (log_dir, CCA_LOG_DIR)
 
     run_cmd = '%s run' % CONTAINER_CMD
     run_cmd += ' --rm'
@@ -250,14 +250,14 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False):
             print('"%s": faild to create: %s' % (log_dir, e))
             return
 
-    vol_opt = '-v %s:%s' % (dpath, proj_path)
-    vol_opt += ' -v %s:%s' % (log_dir, CCA_LOG_DIR)
-    vol_opt += ' -v %s:%s' % (outline_path, data_path_base+'outline/'+proj_id)
-    vol_opt += ' -v %s:%s' % (metrics_path, data_path_base+'metrics/'+proj_id)
-    vol_opt += ' -v %s:%s' % (target_path, data_path_base+'target/'+proj_id)
-    vol_opt += ' -v %s:%s' % (topic_path, data_path_base+'topic')
-    vol_opt += ' -v %s:%s' % (readme_links_path, data_path_base+'readme_links')
-    vol_opt += ' -v %s:%s' % (mongo_path, CCA_VAR+'/mongo')
+    vol_opt = '-v "%s:%s"' % (dpath, proj_path)
+    vol_opt += ' -v "%s:%s"' % (log_dir, CCA_LOG_DIR)
+    vol_opt += ' -v "%s:%s"' % (outline_path, data_path_base+'outline/'+proj_id)
+    vol_opt += ' -v "%s:%s"' % (metrics_path, data_path_base+'metrics/'+proj_id)
+    vol_opt += ' -v "%s:%s"' % (target_path, data_path_base+'target/'+proj_id)
+    vol_opt += ' -v "%s:%s"' % (topic_path, data_path_base+'topic')
+    vol_opt += ' -v "%s:%s"' % (readme_links_path, data_path_base+'readme_links')
+    vol_opt += ' -v "%s:%s"' % (mongo_path, CCA_VAR+'/mongo')
 
     name = '%s_%s' % (subcmd_name, proj_id)
 
