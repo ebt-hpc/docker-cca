@@ -138,7 +138,7 @@ def get_image_name(devel=False):
     image = IMAGE_NAME+suffix
     return image
 
-def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False):
+def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False):
     dpath = check_path(dpath)
 
     if dpath == None:
@@ -166,6 +166,8 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False):
     subcmd_path = '%s/%s' % (CCA_HOME, subcmd_name)
     subcmd = subcmd_path
     subcmd += ' -m %d' % mem
+    if keep_fb:
+        subcmd += ' -k'
     subcmd += ' %s' % proj_path
 
     log_dir = os.path.join(dest_root, LOG_DIR_NAME)
@@ -314,10 +316,12 @@ def update(args):
             print('execution failed: %s' % e)
 
 def opcount(args):
-    run_cmd('opcount', args.proj_dir, args.mem, dry_run=args.dry_run, devel=args.devel)
+    run_cmd('opcount', args.proj_dir, args.mem, dry_run=args.dry_run, keep_fb=args.keep_fb,
+            devel=args.devel)
 
 def outline(args):
-    run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run, devel=args.devel)
+    run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run, keep_fb=args.keep_fb,
+            devel=args.devel)
 
 def treeview_start(args):
     run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel)
@@ -353,6 +357,8 @@ def main():
                                            formatter_class=ArgumentDefaultsHelpFormatter)
     parser_opcount.add_argument('proj_dir', type=str, metavar='DIR',
                                 help='directory that subject programs reside')
+    parser_opcount.add_argument('-k', '--keep-fb', dest='keep_fb', action='store_true',
+                                help='keep FB')
     parser_opcount.set_defaults(func=opcount)
 
     parser_outline = subparsers.add_parser('outline',
@@ -360,6 +366,8 @@ def main():
                                            formatter_class=ArgumentDefaultsHelpFormatter)
     parser_outline.add_argument('proj_dir', type=str, metavar='DIR',
                                 help='directory that subject programs reside')
+    parser_outline.add_argument('-k', '--keep-fb', dest='keep_fb', action='store_true',
+                                help='keep FB')
     parser_outline.set_defaults(func=outline)
 
     parser_tv = subparsers.add_parser('treeview')
