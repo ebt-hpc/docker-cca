@@ -4,7 +4,8 @@
 '''
   A driver script for CCA/EBT container image
 
-  Copyright 2013-2017 RIKEN
+  Copyright 2013-2018 RIKEN
+  Copyright 2018 Chiba Institute of Technology
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -51,6 +52,9 @@ BUFSIZE = 0 # unbuffered
 
 STAT_NAME = 'status'
 LOG_DIR_NAME = 'log'
+
+#WIN_HOST_FLAG = True
+WIN_HOST_FLAG = sys.platform.startswith('win')
 
 ### timezone
 
@@ -130,6 +134,14 @@ def get_proj_path(dpath):
     proj_id = get_proj_id(dpath)
     proj_path = '%s/%s' % (PROJS_DIR, proj_id)
     return proj_path
+
+def get_container_name(subcmd_name, proj_id):
+    name = '%s_%s' % (subcmd_name, proj_id)
+    return name
+
+def get_mongo_volume_name(subcmd_name, proj_id):
+    name = 'vol_mongo_%s_%s' % (subcmd_name, proj_id)
+    return name
 
 def get_image_name(devel=False):
     suffix = ''
@@ -215,8 +227,66 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False):
         except OSError as e:
             print('execution failed: %s' % e)
 
+def mongo_db_exists(mongo_path):
+    p = os.path.join(mongo_path, 'db', 'loop_survey.ns')
+    b = os.path.exists(p)
+    return b
 
-def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False):
+def restore_mongo_db(vol_name, mongo_path, dry_run=False, force=False):
+    if not mongo_db_exists(mongo_path):
+        return
+
+    if force:
+        print('restoring state from "%s"...' % mongo_path)
+    else:
+        while True:
+            a = raw_input('Do you want to restore state from "%s" (y/n)? ' % mongo_path)
+            if a == 'y':
+                break
+            elif a == 'n':
+                return
+
+    run_cmd = '%s run --rm -t' % CONTAINER_CMD
+    if TZ:
+        run_cmd += ' -e "TZ=%s"' % TZ
+    run_cmd += ' -v "%s:%s/mongo"' % (vol_name, CCA_VAR)
+    run_cmd += ' -v "%s:/tmp/mongo"' % mongo_path
+    guest_cmd = '/bin/bash -c "rm -rf %s/mongo/db; cp -a /tmp/mongo/db %s/mongo/"' % (CCA_VAR, CCA_VAR)
+    run_cmd += ' %s %s' % (get_image_name(), guest_cmd)
+    print(run_cmd)
+    if not dry_run:
+        try:
+            call(run_cmd, shell=True)
+        except OSError as e:
+            print('execution failed: %s' % e)
+
+def save_mongo_db(vol_name, mongo_path, dry_run=False, force=False):
+    if force:
+        print('saving state to "%s"...' % mongo_path)
+    else:
+        while True:
+            a = raw_input('Do you want to save state to "%s" (y/n)? ' % mongo_path)
+            if a == 'y':
+                break
+            elif a == 'n':
+                return
+
+    run_cmd = '%s run --rm -t' % CONTAINER_CMD
+    if TZ:
+        run_cmd += ' -e "TZ=%s"' % TZ
+    run_cmd += ' -v "%s:%s/mongo"' % (vol_name, CCA_VAR)
+    run_cmd += ' -v "%s:/tmp/mongo"' % mongo_path
+    guest_cmd = '/bin/bash -c "rm -rf /tmp/mongo/db; cp -a %s/mongo/db /tmp/mongo/"' % CCA_VAR
+    run_cmd += ' %s %s' % (get_image_name(), guest_cmd)
+    print(run_cmd)
+    if not dry_run:
+        try:
+            call(run_cmd, shell=True)
+        except OSError as e:
+            print('execution failed: %s' % e)
+
+
+def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False, restore=False):
     subcmd_name = 'treeview'
     dpath = check_path(dpath)
 
@@ -259,9 +329,14 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False):
     vol_opt += ' -v "%s:%s"' % (target_path, data_path_base+'target/'+proj_id)
     vol_opt += ' -v "%s:%s"' % (topic_path, data_path_base+'topic')
     vol_opt += ' -v "%s:%s"' % (readme_links_path, data_path_base+'readme_links')
-    vol_opt += ' -v "%s:%s"' % (mongo_path, CCA_VAR+'/mongo')
+    if WIN_HOST_FLAG and restore:
+        vol_name = get_mongo_volume_name(subcmd_name, proj_id)
+        restore_mongo_db(vol_name, mongo_path, dry_run=dry_run, force=False)
+        vol_opt += ' -v "%s:%s"' % (vol_name, CCA_VAR+'/mongo')
+    else:
+        vol_opt += ' -v "%s:%s"' % (mongo_path, CCA_VAR+'/mongo')
 
-    name = '%s_%s' % (subcmd_name, proj_id)
+    name = get_container_name(subcmd_name, proj_id)
 
     port_opt = '-p %d:80' % port
 
@@ -287,14 +362,16 @@ def run_tv_srv(dpath, port=DEFAULT_SRV_PORT, dry_run=False, devel=False):
             print('execution failed: %s' % e)
 
 
-def stop_tv_srv(dpath, dry_run=False, devel=False):
+def stop_tv_srv(dpath, dry_run=False, devel=False, save=False):
     subcmd_name = 'treeview'
     dpath = check_path(dpath)
 
     if dpath == None:
         return
 
-    name = '%s_%s' % (subcmd_name, os.path.basename(dpath))
+    proj_id = get_proj_id(dpath)
+
+    name = get_container_name(subcmd_name, proj_id)
 
     stop_cmd = '%s stop %s' % (CONTAINER_CMD, name)
 
@@ -305,6 +382,13 @@ def stop_tv_srv(dpath, dry_run=False, devel=False):
             call(stop_cmd, shell=True)
         except OSError as e:
             print('execution failed: %s' % e)
+
+    if WIN_HOST_FLAG and save:
+        vol_name = get_mongo_volume_name(subcmd_name, proj_id)
+        dest_root = os.path.join(dpath, DATA_DIR_NAME)
+        mongo_path = os.path.join(dest_root, 'mongo')
+        save_mongo_db(vol_name, mongo_path, dry_run=dry_run, force=False)
+
 
 def update(args):
     cmd = '%s pull %s' % (CONTAINER_CMD, get_image_name(devel=args.devel))
@@ -324,10 +408,11 @@ def outline(args):
             devel=args.devel)
 
 def treeview_start(args):
-    run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel)
+    run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel,
+               restore=args.restore)
 
 def treeview_stop(args):
-    stop_tv_srv(args.proj_dir, dry_run=args.dry_run, devel=args.devel)
+    stop_tv_srv(args.proj_dir, dry_run=args.dry_run, devel=args.devel, save=args.save)
 
 
 def main():
@@ -381,12 +466,16 @@ def main():
     parser_tv_start.add_argument('-p', '--port', dest='port', default=DEFAULT_SRV_PORT,
                                  metavar='PORT', type=int,
                                  help='service port number')
+    parser_tv_start.add_argument('--restore', dest='restore', action='store_true',
+                                 help='restore viewer state (Windows host only)')
     parser_tv_start.set_defaults(func=treeview_start)
 
     parser_tv_stop = subparsers_tv.add_parser('stop',
                                               formatter_class=ArgumentDefaultsHelpFormatter)
     parser_tv_stop.add_argument('proj_dir', type=str, metavar='DIR',
                                  help='directory that subject programs reside')
+    parser_tv_stop.add_argument('--save', dest='save', action='store_true',
+                                help='save viewer state (Windows host only)')
     parser_tv_stop.set_defaults(func=treeview_stop)
 
 
