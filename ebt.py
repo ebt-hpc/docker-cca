@@ -373,11 +373,20 @@ def stop_tv_srv(dpath, dry_run=False, devel=False, save=False):
 
     name = get_container_name(subcmd_name, proj_id)
 
+    shutdown_cmd = '%s exec -t %s %s/scripts/shutdown_mongo.py' % (CONTAINER_CMD,
+                                                                   name,
+                                                                   CCA_HOME)
+
     stop_cmd = '%s stop %s' % (CONTAINER_CMD, name)
 
+    print(shutdown_cmd)
     print(stop_cmd)
 
     if not dry_run:
+        try:
+            call(shutdown_cmd, shell=True)
+        except OSError as e:
+            print('execution failed: %s' % e)
         try:
             call(stop_cmd, shell=True)
         except OSError as e:
