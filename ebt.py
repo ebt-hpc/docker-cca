@@ -150,7 +150,9 @@ def get_image_name(devel=False):
     image = IMAGE_NAME+suffix
     return image
 
-def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False):
+def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False,
+            all_roots=False):
+
     dpath = check_path(dpath)
 
     if dpath == None:
@@ -181,6 +183,9 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False):
     if keep_fb:
         subcmd += ' -k'
     subcmd += ' %s' % proj_path
+
+    if all_roots:
+        subcmd += ' -a'
 
     log_dir = os.path.join(dest_root, LOG_DIR_NAME)
     if not os.path.exists(log_dir):
@@ -414,7 +419,7 @@ def opcount(args):
 
 def outline(args):
     run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run, keep_fb=args.keep_fb,
-            devel=args.devel)
+            devel=args.devel, all_roots=args.all_roots)
 
 def treeview_start(args):
     run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel,
@@ -462,6 +467,8 @@ def main():
                                 help='directory that subject programs reside')
     parser_outline.add_argument('-k', '--keep-fb', dest='keep_fb', action='store_true',
                                 help='keep FB')
+    parser_outline.add_argument('-a', '--all-roots', dest='all_roots', action='store_true',
+                                help='allow subprograms to be roots in addition to main programs')
     parser_outline.set_defaults(func=outline)
 
     parser_tv = subparsers.add_parser('treeview')
