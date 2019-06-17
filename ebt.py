@@ -5,7 +5,7 @@
   A driver script for CCA/EBT container image
 
   Copyright 2013-2018 RIKEN
-  Copyright 2018 Chiba Institute of Technology
+  Copyright 2018-2019 Chiba Institute of Technology
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
   limitations under the License.
 '''
 
-__author__ = 'Masatomo Hashimoto <m.hashimoto@riken.jp>'
+__author__ = 'Masatomo Hashimoto <m.hashimoto@stair.center>'
 
 import os
 import sys
@@ -151,7 +151,7 @@ def get_image_name(devel=False):
     return image
 
 def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False,
-            all_roots=False):
+            all_roots=False, all_sps=False):
 
     dpath = check_path(dpath)
 
@@ -186,6 +186,9 @@ def run_cmd(subcmd_name, dpath, mem, dry_run=False, devel=False, keep_fb=False,
 
     if all_roots:
         subcmd += ' -a'
+
+    if all_sps:
+        subcmd += ' -s'
 
     log_dir = os.path.join(dest_root, LOG_DIR_NAME)
     if not os.path.exists(log_dir):
@@ -419,7 +422,7 @@ def opcount(args):
 
 def outline(args):
     run_cmd('outline', args.proj_dir, args.mem, dry_run=args.dry_run, keep_fb=args.keep_fb,
-            devel=args.devel, all_roots=args.all_roots)
+            devel=args.devel, all_roots=args.all_roots, all_sps=args.all_sps)
 
 def treeview_start(args):
     run_tv_srv(args.proj_dir, port=args.port, dry_run=args.dry_run, devel=args.devel,
@@ -468,7 +471,9 @@ def main():
     parser_outline.add_argument('-k', '--keep-fb', dest='keep_fb', action='store_true',
                                 help='keep FB')
     parser_outline.add_argument('-a', '--all-roots', dest='all_roots', action='store_true',
-                                help='allow subprograms to be roots in addition to main programs')
+                                help='allow subprograms to be shown as roots')
+    parser_outline.add_argument('-s', '--all-sps', dest='all_sps', action='store_true',
+                                help='allow loop-free subprograms to be shown')
     parser_outline.set_defaults(func=outline)
 
     parser_tv = subparsers.add_parser('treeview')
