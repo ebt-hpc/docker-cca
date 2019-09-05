@@ -436,7 +436,7 @@ def main():
     parser = ArgumentParser(description='CCA/EBT driver',
                             formatter_class=ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-m', '--mem', dest='mem', metavar='GB',
+    parser.add_argument('-m', '--mem', dest='mem', metavar='GB', type=int,
                         choices=[2, 4, 8, 16, 32, 48, 64],
                         help='available memory (GB)', default=4)
 
